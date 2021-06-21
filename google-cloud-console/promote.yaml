@@ -1,0 +1,51 @@
+steps:
+  #################################################################
+  # Tag
+  #################################################################
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'tag',
+      'gcr.io/$PROJECT_ID/server:development',
+      'gcr.io/$PROJECT_ID/server:production'
+    ]
+
+  #################################################################
+  # Push
+  #################################################################
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push', 'gcr.io/$PROJECT_ID/server'
+    ]
+
+  #################################################################
+  # Deploy
+  #################################################################
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args: [
+      "run", "deploy", "server-production",
+      "--allow-unauthenticated",
+      "--platform", "managed",
+      "--region", "us-central1",
+      "--add-cloudsql-instances", "production",
+      "--image", "gcr.io/$PROJECT_ID/server:production",
+      "--set-env-vars", "JWT_SECRET=${_JWT_SECRET}",
+      "--set-env-vars", "DATABASE_HOST=${_DATABASE_HOST}",
+      "--set-env-vars", "DATABASE_USERNAME=${_DATABASE_USERNAME}",
+      "--set-env-vars", "DATABASE_PASSWORD=${_DATABASE_PASSWORD}",
+      "--set-env-vars", "DATABASE_NAME=${_DATABASE_NAME}"
+    ]
+
+  #################################################################
+  # Migrate
+  #################################################################
+  - name: "gcr.io/google-appengine/exec-wrapper"
+    args: [
+      "-i", "gcr.io/$PROJECT_ID/server:production",
+      "-s", "$PROJECT_ID:us-central1:production",
+      "-e", "DATABASE_HOST=${_DATABASE_HOST}",
+      "-e", "DATABASE_USERNAME=${_DATABASE_USERNAME}",
+      "-e", "DATABASE_PASSWORD=${_DATABASE_PASSWORD}",
+      "-e", "DATABASE_NAME=${_DATABASE_NAME}",
+      "--", "python", "manage.py", "migrate"
+    ]

@@ -1,0 +1,6 @@
+################### Extended Services Definition ##################
+services:
+  server:
+    image: server:cd
+    build:
+      target: cd

@@ -1,0 +1,18 @@
+FROM python:3.6-stretch AS base
+WORKDIR /usr/src/app
+COPY requirements*.txt ./
+
+FROM base AS local
+RUN pip install -r requirements.local.txt
+COPY . .
+CMD ["python", "manage.py", "runserver", "0.0.0.0:5000"]
+
+FROM base AS ci
+RUN pip install -r requirements.ci.txt
+COPY . .
+CMD ["python", "manage.py", "test"]
+
+FROM base AS cd
+RUN pip install -r requirements.cd.txt
+COPY . .
+CMD ["uwsgi", "--http", ":$PORT", "--wsgi-file", "config/wsgi.py"]

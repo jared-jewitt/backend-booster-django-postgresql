@@ -1,0 +1,5 @@
+-r requirements.cd.txt
+
+pylint == 2.8.2
+black == 21.5b1
+pygments == 2.9.0

@@ -1,0 +1,54 @@
+##################### Environment variables ######################
+
+x-server-variables: &server-variables
+  ALLOWED_HOSTS: "*"
+  SECRET_KEY: "PrettyShittySecret"
+  DEBUG: "true"
+  DATABASE_HOST: "database"
+  DATABASE_PORT: 5432
+  DATABASE_NAME: "dev"
+  DATABASE_USERNAME: "admin"
+  DATABASE_PASSWORD: "password"
+
+x-database-variables: &database-variables
+  POSTGRES_DB: "dev"
+  POSTGRES_USER: "admin"
+  POSTGRES_PASSWORD: "password"
+
+################### Extended Services Definition ##################
+services:
+  server:
+    image: ${COMPOSE_PROJECT_NAME}_server:local
+    build:
+      target: local
+    volumes:
+      - "./:/usr/src/app"
+    ports:
+      - 5000:5000
+    environment:
+      <<: *server-variables
+    depends_on:
+      - database
+    networks:
+      - default
+
+  database:
+    image: ${COMPOSE_PROJECT_NAME}_database:local
+    volumes:
+      - "db-data:/var/lib/postgresql/data"
+    ports:
+      - 5435:5432
+    environment:
+      <<: *database-variables
+    networks:
+      - default
+
+####################### Networks Definition #######################
+networks:
+  default:
+    driver: bridge
+
+####################### Volumes Definition ########################
+volumes:
+  db-data:
+    driver: local

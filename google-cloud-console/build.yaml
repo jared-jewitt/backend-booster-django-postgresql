@@ -1,0 +1,62 @@
+steps:
+  #################################################################
+  # Build
+  #################################################################
+  - name: "docker/compose:1.27.0"
+    args: ["build", "server"]
+    env:
+      - "COMPOSE_FILE=docker-compose.yml:docker/docker-compose.cd.yml"
+
+  #################################################################
+  # Tag
+  #################################################################
+  - name: "gcr.io/cloud-builders/docker"
+    args: [
+      "tag", "server:cd", "gcr.io/$PROJECT_ID/server:$SHORT_SHA"
+    ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    args: [
+      "tag", "server:cd", "gcr.io/$PROJECT_ID/server:development"
+    ]
+
+  #################################################################
+  # Push
+  #################################################################
+  - name: "gcr.io/cloud-builders/docker"
+    args: [
+      "push", "gcr.io/$PROJECT_ID/server"
+    ]
+
+  #################################################################
+  # Deploy
+  #################################################################
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args: [
+      "run", "deploy", "server-development",
+      "--allow-unauthenticated",
+      "--platform", "managed",
+      "--region", "us-central1",
+      "--add-cloudsql-instances", "development",
+      "--image", "gcr.io/$PROJECT_ID/server:development",
+      "--set-env-vars", "JWT_SECRET=${_JWT_SECRET}",
+      "--set-env-vars", "DATABASE_HOST=${_DATABASE_HOST}",
+      "--set-env-vars", "DATABASE_USERNAME=${_DATABASE_USERNAME}",
+      "--set-env-vars", "DATABASE_PASSWORD=${_DATABASE_PASSWORD}",
+      "--set-env-vars", "DATABASE_NAME=${_DATABASE_NAME}"
+    ]
+
+  #################################################################
+  # Migrate
+  #################################################################
+  - name: "gcr.io/google-appengine/exec-wrapper"
+    args: [
+      "-i", "gcr.io/$PROJECT_ID/server:development",
+      "-s", "$PROJECT_ID:us-central1:development",
+      "-e", "DATABASE_HOST=${_DATABASE_HOST}",
+      "-e", "DATABASE_USERNAME=${_DATABASE_USERNAME}",
+      "-e", "DATABASE_PASSWORD=${_DATABASE_PASSWORD}",
+      "-e", "DATABASE_NAME=${_DATABASE_NAME}",
+      "--", "python", "manage.py", "migrate"
+    ]

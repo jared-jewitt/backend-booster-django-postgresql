@@ -1,0 +1,44 @@
+##################### Environment variables ######################
+
+x-server-variables: &server-variables
+  ALLOWED_HOSTS: "*"
+  SECRET_KEY: "PrettyShittySecret"
+  DEBUG: "true"
+  DATABASE_HOST: "database"
+  DATABASE_PORT: 5432
+  DATABASE_NAME: "test"
+  DATABASE_USERNAME: "admin"
+  DATABASE_PASSWORD: "password"
+
+x-database-variables: &database-variables
+  POSTGRES_DB: "test"
+  POSTGRES_USER: "admin"
+  POSTGRES_PASSWORD: "password"
+
+################### Extended Services Definition ##################
+services:
+  server:
+    image: server:ci
+    build:
+      target: ci
+    environment:
+      <<: *server-variables
+    depends_on:
+      - database
+    networks:
+      - default
+
+  database:
+    image: database:ci
+    ports:
+      - 5435:5432
+    environment:
+      <<: *database-variables
+    networks:
+      - default
+
+####################### Networks Definition #######################
+networks:
+  default:
+    driver: bridge
+

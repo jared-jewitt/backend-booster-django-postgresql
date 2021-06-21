@@ -1,0 +1,11 @@
+# Ignore everything
+/*
+
+# Except...
+!config
+!migrations
+!src
+!tests
+!requirements*
+!.pylintrc
+!manage.py

@@ -1,0 +1,15 @@
+version: "3.8"
+
+##################### Base Services Definition #####################
+services:
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+
+  database:
+    container_name: database
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.database

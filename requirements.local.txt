@@ -1,0 +1,2 @@
+-r requirements.ci.txt
+-r requirements.cd.txt
